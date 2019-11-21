@@ -1,2 +1,3 @@
 # 2019-2
-printttttt
+
+Dsatur algorithm in 17 lines
