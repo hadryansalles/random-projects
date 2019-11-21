@@ -5,7 +5,7 @@ def dsatur(V, E):
     deg = lambda v: len(E[v])
     sat = lambda v: len(S[v])
     cmap = set(range(1, len(U) + 1)) 
-    while(U): # while any vertex uncolored
+    while(U): # while some vertex uncolored
         h = U[0] # get the vertex with highest degree of saturation
         for v in U: # break ties by highest degree
             if sat(v) > sat(h) or (sat(v) == sat(h) and deg(v) > deg(h)):
