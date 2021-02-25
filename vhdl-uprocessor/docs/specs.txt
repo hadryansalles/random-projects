@@ -1,0 +1,35 @@
+operands:
+RRR = address of reg1
+rrr = address of reg2
+ddd_ddd = constant of 6 bits
+iii_iii_iii = constant of 9 bits
+AAA_AAA_AAA_AAA = constant of 12 bits
+
+flags:
+CY = '1' if a borrow occurs from MSB; otherwise, '0'.
+OV = '1' if overflow occurs; otherwise, '0'.
+S  = '1' if the operation result is negative; otherwise, '0'.
+Z  = '1' if the operation result is '0'; otherwise, '0'.
+
+instructions:
+NOP             = 0000_000_000_000_000
+ADD reg1, reg2  = 0001_000_000_rrr_RRR -- reg2 <= reg2 + reg1
+SUB reg1, reg2  = 0010_000_000_rrr_RRR -- reg2 <= reg2 - reg1
+MUL reg1, reg2  = 0011_000_000_rrr_RRR -- reg2 <= reg2 * reg1 
+CMP reg1, reg2  = 0100_000_000_rrr_RRR -- reg2 - reg1 and set flags
+BE  imm12       = 0101_AAA_AAA_AAA_AAA -- PC <= PC + AAA_AAA_AAA_AAA if Z = '1'
+BLT imm12       = 0110_AAA_AAA_AAA_AAA -- PC <= PC + AAA_AAA_AAA_AAA if (S xor OV) = '1'
+JR  imm12       = 0111_AAA_AAA_AAA_AAA -- PC <= PC + AAA_AAA_AAA_AAA
+JMP disp9[reg1] = 1100_iii_iii_iii_RRR -- PC <= reg1 + disp9
+MOV reg1, reg2  = 1000_000_000_rrr_RRR -- reg2 <= reg1
+MOV imm9, reg1  = 1001_iii_iii_iii_RRR -- reg1 <= imm9
+LD.W disp6[reg1], reg2 = 1010_ddd_ddd_rrr_RRR -- $(reg2) <= RAM($(reg1) + disp6)
+ST.W reg2, disp6[reg1] = 1011_ddd_ddd_rrr_RRR -- RAM($(reg1) + disp6) <= $(reg2)
+
+-- OBSERVACAO: A instrução MUL original no V850 é:
+-- MUL reg1, reg2, reg3 
+-- reg3 <= (reg1*reg2)(31 downto 16)
+-- reg2 <= (reg1*reg2)(15 downto 0)
+-- Porém, como conversado com o professor, não há necessidade de fazer a instrução dessa forma.
+-- Além da instrução não ser necessária, ela precisaria de um estado adicional na máquina de estados 
+-- para escrever em dois registradores.

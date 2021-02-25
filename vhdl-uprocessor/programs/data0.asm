@@ -1,0 +1,14 @@
+NOP
+MOV 511, $1
+MOV 341, $2
+MOV $1, $3
+ADD $2, $3
+SUB $1, $3
+NOP
+CMP $3, $2
+BE  2
+JR -5
+NOP
+CMP $3, $0
+BE  15
+MUL $3, $1
