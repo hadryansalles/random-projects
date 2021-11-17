@@ -2,6 +2,10 @@
 
 Some personal and university projects developed during my graduation of Computer Engineering at UTFPR.
 
+### **Operational System - 2021**
+
+A (very rudimentary) operational system made in **C** for the discipline of Operational Systems. 6th semester.
+
 ### **VHDL microprocessor - 2020**
 
 A microprocessor made in **VHDL** for the discipline of Computer Architecture. 5th semester.
