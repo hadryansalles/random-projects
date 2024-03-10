@@ -6,6 +6,11 @@
 #include <GLFW/glfw3.h>
 #include <gl/gl.h>
 
+vec3 vec3_add(vec3 a, vec3 b) {
+    vec3 v = {a.x + b.x, a.y + b.y, a.z + b.z};
+    return v;
+}
+
 char* file_read(const char* filename, unsigned int* outsize) {
     FILE *f = fopen(filename, "rb");
     if (f == NULL) {
@@ -82,10 +87,13 @@ Mesh mesh_create(const vec3* vertices, int count) {
     glBindVertexArray(mesh.vao);
 
     glBindBuffer(GL_ARRAY_BUFFER, mesh.vbo);
-    glBufferData(GL_ARRAY_BUFFER, count * sizeof(vec3), vertices, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, 2 * count * sizeof(vec3), vertices, GL_DYNAMIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vec3), (void*)0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 2 * sizeof(vec3), (void*)0);
     glEnableVertexAttribArray(0);
+
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 2 * sizeof(vec3), (void*)sizeof(vec3));
+    glEnableVertexAttribArray(1);
 
     glBindBuffer(GL_ARRAY_BUFFER, 0); 
     glBindVertexArray(0); 
@@ -95,7 +103,7 @@ Mesh mesh_create(const vec3* vertices, int count) {
 
 void mesh_update(Mesh mesh, const vec3* vertices, int count) {
     glBindBuffer(GL_ARRAY_BUFFER, mesh.vbo);
-    glBufferData(GL_ARRAY_BUFFER, count * sizeof(vec3), vertices, GL_DYNAMIC_DRAW);
+    glBufferData(GL_ARRAY_BUFFER, 2 * count * sizeof(vec3), vertices, GL_DYNAMIC_DRAW);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 

@@ -1,9 +1,6 @@
 #ifndef CORE_H
 #define CORE_H
 
-char* file_read(const char* filename, unsigned int* size);
-unsigned int shader_create(const char* vertexFile, const char* fragmentFile);
-
 typedef struct {
     float x, y, z;
 } xyz_type;
@@ -16,6 +13,9 @@ typedef struct {
 } vec3;
 
 vec3 vec3_add(vec3 a, vec3 b);
+
+char* file_read(const char* filename, unsigned int* size);
+unsigned int shader_create(const char* vertexFile, const char* fragmentFile);
 
 typedef struct {
     unsigned int vao;
