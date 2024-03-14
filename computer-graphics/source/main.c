@@ -46,9 +46,9 @@ int main() {
     unsigned int shaderProgram = shader_create("source/main.vert", "source/main.frag");
 
     float changing_color = 0.0f;
-    float width = 0.2 * 0.5f;
-    float height = 0.2 * sqrt(3.0f) / 3.0f;
-    vec3 pos = {0.5, 0.5, 0.0};
+    float width = 0.2f * 0.5f;
+    float height = 0.2f * sqrt(3.0f) / 3.0f;
+    vec3 pos = {0.5f, 0.5f, 0.0f};
     vec3 vertices[6];
     vec3 speed = random_speed();
 
