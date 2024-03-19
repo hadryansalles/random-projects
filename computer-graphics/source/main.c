@@ -1,6 +1,6 @@
 /*
  * @author Hadryan Salles
- * @date   03/09/2024
+ * @date   03/18/2024
  */
 
 #include <stdio.h>
@@ -14,8 +14,7 @@
 #include "core.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
-void update_vertices(vec3 pos, float w, float h, float color, vec3* vertices);
-vec3 random_speed();
+void log_infos(vec3* vertices, float ratio);
 
 const unsigned int SCR_WIDTH = 1280;
 const unsigned int SCR_HEIGHT = 720;
@@ -45,53 +44,57 @@ int main() {
 
     unsigned int shaderProgram = shader_create("source/main.vert", "source/main.frag");
 
-    float changing_color = 0.0f;
-    float width = 0.2 * 0.5f;
-    float height = 0.2 * sqrt(3.0f) / 3.0f;
-    vec3 pos = {0.5, 0.5, 0.0};
-    vec3 vertices[6];
-    vec3 speed = random_speed();
+    vec3 vertices[6] = {
+        {0, 0, 0},
+        {1, 0, 0},
+        {0, 0, 0},
+        {0, 1, 0},
+        {0, 0, 0},
+        {0, 0, 1}
+    };
 
-    update_vertices(pos, width, height, changing_color, vertices);
     Mesh mesh = mesh_create(vertices, 3);
+
+    int inputCount = 0;
+
+    glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+    glLineWidth(10.0);
+
+    int deboucing = 0;
+    printf("Click on 3 times on screen to input vertices...\n");
 
     while (!glfwWindowShouldClose(window)) {
         if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
             glfwSetWindowShouldClose(window, 1);
         }
 
-        if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_1) == GLFW_PRESS) {
+        if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_1) == GLFW_RELEASE) {
+            if (deboucing == 1) {
+                inputCount++;
+            }
+            deboucing = 0;
+        } else {
             double mouseX = 0;
             double mouseY = 0;
             glfwGetCursorPos(window, &mouseX, &mouseY);
             int width = 1;
             int height = 1;
             glfwGetWindowSize(window, &width, &height);
-            pos.x = mouseX / (float)width;
-            pos.y = mouseY / (float)height;
-        } else {
-            pos = vec3_add(pos, speed);
-            if ((pos.x - width) < 0.0f || (pos.x + width) > 1.0f) {
-                speed.x *= -1.0f;
-                pos.x = max(0.0f + width, min(1.0f - width, pos.x));
+            int targetVertex = inputCount % 3;
+            vertices[2 * targetVertex].x = -1 + 2 * (mouseX / (float) width);
+            vertices[2 * targetVertex].y = (-1 + 2 * (mouseY / (float) height)) * -1;
+            if (inputCount >= 2) {
+                log_infos(vertices, height/(float)width);
             }
-            if ((pos.y - height) < 0.0f || (pos.y + height) > 1.0f) {
-                speed.y *= -1.0f;
-                pos.y = max(0.0f + height, min(1.0f - height, pos.y));
-            }
+            mesh_update(mesh, vertices, 3);
+            deboucing = 1;
         }
-        update_vertices(pos, width, height, changing_color, vertices);
-        mesh_update(mesh, vertices, 3);
 
-        glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
         glUseProgram(shaderProgram);
 
-        mesh_draw(mesh);
-
-        changing_color += 0.01f;
-        if (changing_color > 1.0f) {
-            changing_color = 0.0f;
+        if (inputCount > 2) {
+            mesh_draw(mesh);
         }
 
         glfwSwapBuffers(window);
@@ -109,41 +112,24 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height) {
     glViewport(0, 0, width, height);
 }
 
-void update_vertices(vec3 mousePos, float w, float h, float color, vec3* vertices) {
-    float sqrt3 = sqrt(3.0f);
-
-    vertices[1].y = mousePos.x;
-    vertices[3].y = mousePos.x; 
-    vertices[5].y = mousePos.x; 
-
-    vertices[1].x = mousePos.y; 
-    vertices[3].x = mousePos.y; 
-    vertices[5].x = mousePos.y; 
-
-    vertices[1].z = color;
-    vertices[3].z = color;
-    vertices[5].z = color;
-
-    mousePos.x = mousePos.x * 2.0f - 1.0f;
-    mousePos.y = 1.0f - mousePos.y * 2.0f;
-
-    vertices[0].x = mousePos.x; 
-    vertices[0].y = mousePos.y + 2*h;
-    vertices[2].x = mousePos.x - 2*w;
-    vertices[2].y = mousePos.y - 2*h;
-    vertices[4].x = mousePos.x + 2*w;
-    vertices[4].y = mousePos.y - 2*h;
-
-    vertices[0].z = 0;
-    vertices[2].z = 0;
-    vertices[4].z = 0;
+void log_infos(vec3* vertices, float ratio) {
+    system("cls");
+    vec3 p = vertices[0];
+    p.y *= ratio;
+    vec3 o = vertices[2];
+    o.y *= ratio;
+    vec3 q = vertices[4];
+    q.y *= ratio;
+    vec3 u = vec3_sub(p, o);
+    vec3 v = vec3_sub(q, o);
+    printf("u = %.2f, %.2f\n", u.x, u.y);
+    printf("v = %.2f, %.2f\n", v.x, v.y);
+    float dot_uv = vec3_dot(u, v);
+    float cosTheta = dot_uv / (vec3_length(u) * vec3_length(v));
+    float theta = 180.0f * acosf(cosTheta) / K_PI;
+    printf("theta (degs) = %.3f\n", theta);
+    printf("dot(u, v)    = %.3f\n", dot_uv);
+    vec3 cross_uv = vec3_cross(u, v);
+    printf("cross(u, v)  = %.2f, %.2f, %.2f\n", cross_uv.x, cross_uv.y, cross_uv.z);
 }
 
-vec3 random_speed() {
-    float x = -1.0f + 2.0f * rand() / ((float)RAND_MAX + 1); 
-    float y = -1.0f + 2.0f * rand() / ((float)RAND_MAX + 1); 
-    float mod = sqrt(x * x + y * y);
-    float speed = 0.004f;
-    vec3 v = { speed * x / mod, speed * y / mod, 0.0f };
-    return v;
-}
