@@ -5,10 +5,43 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <gl/gl.h>
+#include <math.h>
 
 vec3 vec3_add(vec3 a, vec3 b) {
-    vec3 v = {a.x + b.x, a.y + b.y, a.z + b.z};
-    return v;
+    a.x += b.x;
+    a.y += b.y;
+    a.z += b.z;
+    return a;
+}
+
+vec3 vec3_sub(vec3 a, vec3 b) {
+    a.x -= b.x;
+    a.y -= b.y;
+    a.z -= b.z;
+    return a;
+}
+
+vec3 vec3_mul(vec3 a, float b) {
+    a.x *= b;
+    a.y *= b;
+    a.z *= b;
+    return a;
+}
+
+vec3 vec3_cross(vec3 a, vec3 b) {
+    vec3 r;
+    r.x = a.y * b.z - a.z * b.y;
+    r.y = a.z * b.x - a.x * b.z;
+    r.z = a.x * b.y - a.y * b.x;
+    return r;
+}
+
+float vec3_dot(vec3 a, vec3 b) {
+    return a.x * b.x + a.y * b.y + a.z * b.z;
+}
+
+float vec3_length(vec3 a) {
+    return sqrt(vec3_dot(a, a));
 }
 
 char* file_read(const char* filename, unsigned int* outsize) {
@@ -107,13 +140,9 @@ void mesh_update(Mesh mesh, const vec3* vertices, int count) {
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
-Mesh mesh_create_colors(const float* vertices, const float* color, int count) {
-
-}
-
 void mesh_draw(Mesh mesh) {
     glBindVertexArray(mesh.vao);
-    glDrawArrays(GL_TRIANGLES, 0, mesh.count);
+    glDrawArrays(GL_LINE_STRIP, 0, mesh.count);
 }
 
 void mesh_delete(Mesh mesh) {
