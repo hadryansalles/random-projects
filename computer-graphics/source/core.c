@@ -1,5 +1,7 @@
 #include "core.h"
 
+#include "cglm.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <glad/glad.h>
@@ -7,42 +9,6 @@
 #include <gl/gl.h>
 #include <math.h>
 
-vec3 vec3_add(vec3 a, vec3 b) {
-    a.x += b.x;
-    a.y += b.y;
-    a.z += b.z;
-    return a;
-}
-
-vec3 vec3_sub(vec3 a, vec3 b) {
-    a.x -= b.x;
-    a.y -= b.y;
-    a.z -= b.z;
-    return a;
-}
-
-vec3 vec3_mul(vec3 a, float b) {
-    a.x *= b;
-    a.y *= b;
-    a.z *= b;
-    return a;
-}
-
-vec3 vec3_cross(vec3 a, vec3 b) {
-    vec3 r;
-    r.x = a.y * b.z - a.z * b.y;
-    r.y = a.z * b.x - a.x * b.z;
-    r.z = a.x * b.y - a.y * b.x;
-    return r;
-}
-
-float vec3_dot(vec3 a, vec3 b) {
-    return a.x * b.x + a.y * b.y + a.z * b.z;
-}
-
-float vec3_length(vec3 a) {
-    return sqrt(vec3_dot(a, a));
-}
 
 char* file_read(const char* filename, unsigned int* outsize) {
     FILE *f = fopen(filename, "rb");
@@ -111,41 +77,40 @@ unsigned int shader_create(const char* vertexShaderFile, const char* fragmentSha
     return shaderProgram;
 }
 
-Mesh mesh_create(const vec3* vertices, int count) {
+Mesh mesh_create(const vec3* vertices, const unsigned int* indices, int vertexCount, int triangleCount) {
     Mesh mesh;
-    mesh.count = count;
+    mesh.vertexCount = vertexCount;
+    mesh.triangleCount = triangleCount;
 
     glGenVertexArrays(1, &mesh.vao);
     glGenBuffers(1, &mesh.vbo);
+    glGenBuffers(1, &mesh.ibo);
+
     glBindVertexArray(mesh.vao);
 
     glBindBuffer(GL_ARRAY_BUFFER, mesh.vbo);
-    glBufferData(GL_ARRAY_BUFFER, 2 * count * sizeof(vec3), vertices, GL_DYNAMIC_DRAW);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 2 * sizeof(vec3), (void*)0);
+    glBufferData(GL_ARRAY_BUFFER, 1 * vertexCount * sizeof(vec3), vertices, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 1 * sizeof(vec3), (void*)0);
     glEnableVertexAttribArray(0);
+    // glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 2 * sizeof(vec3), (void*)sizeof(vec3));
+    // glEnableVertexAttribArray(1);
 
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 2 * sizeof(vec3), (void*)sizeof(vec3));
-    glEnableVertexAttribArray(1);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.ibo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, triangleCount * 3 * sizeof(unsigned int), indices, GL_STATIC_DRAW);
 
-    glBindBuffer(GL_ARRAY_BUFFER, 0); 
     glBindVertexArray(0); 
 
     return mesh;
 }
 
-void mesh_update(Mesh mesh, const vec3* vertices, int count) {
-    glBindBuffer(GL_ARRAY_BUFFER, mesh.vbo);
-    glBufferData(GL_ARRAY_BUFFER, 2 * count * sizeof(vec3), vertices, GL_DYNAMIC_DRAW);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-}
-
 void mesh_draw(Mesh mesh) {
     glBindVertexArray(mesh.vao);
-    glDrawArrays(GL_LINE_STRIP, 0, mesh.count);
+    glDrawElements(GL_TRIANGLES, mesh.triangleCount*3, GL_UNSIGNED_INT, NULL);
+    glBindVertexArray(0);
 }
 
 void mesh_delete(Mesh mesh) {
     glDeleteVertexArrays(1, &mesh.vao);
     glDeleteBuffers(1, &mesh.vbo);
+    glDeleteBuffers(1, &mesh.ibo);
 }
