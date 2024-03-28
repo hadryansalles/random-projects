@@ -1,5 +1,8 @@
-#include "core.h"
+/*
+ * @author Hadryan Salles
+ */
 
+#include "core.h"
 #include "cglm.h"
 
 #include <stdio.h>
@@ -8,7 +11,6 @@
 #include <GLFW/glfw3.h>
 #include <gl/gl.h>
 #include <math.h>
-
 
 char* file_read(const char* filename, unsigned int* outsize) {
     FILE *f = fopen(filename, "rb");
@@ -92,8 +94,6 @@ Mesh mesh_create(const vec3* vertices, const unsigned int* indices, int vertexCo
     glBufferData(GL_ARRAY_BUFFER, 1 * vertexCount * sizeof(vec3), vertices, GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 1 * sizeof(vec3), (void*)0);
     glEnableVertexAttribArray(0);
-    // glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 2 * sizeof(vec3), (void*)sizeof(vec3));
-    // glEnableVertexAttribArray(1);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.ibo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, triangleCount * 3 * sizeof(unsigned int), indices, GL_STATIC_DRAW);

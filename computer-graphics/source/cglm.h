@@ -1,3 +1,7 @@
+/*
+ * @author Hadryan Salles
+ */
+
 #ifndef CLGM_H
 #define CLGM_H
 
@@ -79,31 +83,15 @@ inline vec3 vec3_rand() {
 }
 
 inline vec3 vec3_add(vec3 a, vec3 b) {
-    a.x += b.x;
-    a.y += b.y;
-    a.z += b.z;
-    return a;
+    return vec3_new(a.x + b.x, a.y + b.y, a.z + b.z);
 }
 
 inline vec3 vec3_sub(vec3 a, vec3 b) {
-    a.x -= b.x;
-    a.y -= b.y;
-    a.z -= b.z;
-    return a;
-}
-
-inline vec3 vec3_div(vec3 a, vec3 b) {
-    a.x /= b.x;
-    a.y /= b.y;
-    a.z /= b.z;
-    return a;
+    return vec3_new(a.x - b.x, a.y - b.y, a.z - b.z);
 }
 
 inline vec3 vec3_mul(vec3 a, float b) {
-    a.x *= b;
-    a.y *= b;
-    a.z *= b;
-    return a;
+    return vec3_new(a.x * b, a.y * b, a.z * b);
 }
 
 inline vec3 vec3_cross(vec3 a, vec3 b) {
@@ -122,28 +110,8 @@ inline float vec3_length(vec3 a) {
     return sqrt(vec3_dot(a, a));
 }
 
-inline vec4 vec4_add(vec4 a, vec4 b) {
-    a.x += b.x;
-    a.y += b.y;
-    a.z += b.z;
-    a.w += b.w;
-    return a;
-}
-
 inline vec4 vec4_sub(vec4 a, vec4 b) {
-    a.x -= b.x;
-    a.y -= b.y;
-    a.z -= b.z;
-    a.w -= b.w;
-    return a;
-}
-
-inline vec4 vec4_mul(vec4 a, float b) {
-    a.x *= b;
-    a.y *= b;
-    a.z *= b;
-    a.w *= b;
-    return a;
+    return vec4_new(a.x - b.x, a.y - b.y, a.z - b.z, a.w - b.w);
 }
 
 inline mat4 mat4_identity() {
@@ -170,6 +138,16 @@ inline mat4 mat4_mul(mat4 a, mat4 b) {
         }
     }
     return c;
+}
+
+inline mat4 mat4_transpose(mat4 a) {
+    mat4 b;
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            b.data[4 * i + j] = a.data[4 * j + i];
+        }
+    }
+    return b;
 }
 
 inline vec4 mat4_apply(mat4 a, vec4 v) {
@@ -211,13 +189,7 @@ inline vec4 quat_from_euler(vec3 degrees) {
 }
 
 inline vec4 quat_identity() {
-    vec4 q = {
-        .x = 0,
-        .y = 0,
-        .z = 0,
-        .w = 1
-    };
-    return q;
+    return vec4_new(0, 0, 0, 1);
 }
 
 inline vec4 quat_inverse(vec4 q) {
@@ -233,7 +205,7 @@ inline mat4 mat4_from_quat(vec4 q) {
             {0, 0, 0, 1},
         }
     };
-    return m;
+    return mat4_transpose(m);
 }
 
 inline vec3 vec3_from_vec4(vec4 v) {
@@ -260,11 +232,13 @@ inline vec4 vec4_from_vec3(vec3 v, float w) {
 }
 
 inline mat4 mat4_transform(vec3 scale, vec4 quat, vec3 translation) {
-    mat4 m = mat4_from_quat(quat);
+    mat4 m = mat4_identity();
     m.cols[0].x *= scale.x;
     m.cols[1].y *= scale.y;
     m.cols[2].z *= scale.z;
+    m = mat4_mul(mat4_from_quat(quat), m);
     m.cols[3] = vec4_from_vec3(translation, 1.0f);
+    //m.cols[3] = vec4_new(0, 0, 0, 1);
     return m;
 }
 
@@ -283,16 +257,6 @@ inline mat4 mat4_transform_inverse(vec3 scale, vec4 quat, vec3 translation) {
     m.cols[2].z /= scale.z;
     m.cols[3] = vec4_sub(vec4_new(0, 0, 0, 1), vec4_from_vec3(translation, 0.0f));
     return m;
-}
-
-inline mat4 mat4_transpose(mat4 a) {
-    mat4 b;
-    for (int i = 0; i < 4; i++) {
-        for (int j = 0; j < 4; j++) {
-            b.data[4 * i + j] = a.data[4 * j + i];
-        }
-    }
-    return b;
 }
 
 inline mat4 mat4_translation(vec3 translation) {
