@@ -38,39 +38,6 @@ int main() {
     unsigned int shaderProgram = shader_create("source/main.vert", "source/main.frag");
     int modelLocation = glGetUniformLocation(shaderProgram, "model");
 
-    vec3 vertices[] = {
-        {-1, -1,  1},
-        {-1,  1,  1},
-        { 1,  1,  1},
-        { 1, -1,  1},
-
-        {-1, -1, -1},
-        {-1,  1, -1},
-        { 1,  1, -1},
-        { 1, -1, -1},
-    };
-
-    unsigned int indices[] = {
-        0, 1, 2,
-        2, 3, 0,
-
-        7, 6, 5,
-        5, 4, 7,
-
-        4, 5, 1,
-        1, 0, 4,
-
-        3, 2, 6,
-        6, 7, 3,
-
-        1, 5, 6,
-        6, 2, 1,
-
-        4, 0, 3,
-        3, 7, 4
-    };
-
-    //Mesh mesh = mesh_create(vertices, indices, 8, 12);
     Mesh mesh = mesh_read("cube.obj");
 
     vec3 translation = vec3_new(0, 0, 0);

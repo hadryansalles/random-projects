@@ -282,13 +282,6 @@ inline mat4 mat4_transform_inverse(vec3 scale, vec4 quat, vec3 translation) {
     m = mat4_mul(mat4_from_quat(quat_inverse(quat)), m);
     m.cols[3] = vec4_sub(vec4_new(0, 0, 0, 1), vec4_from_vec3(translation, 0.0f));
     return m;
-
-    //mat4 m = mat4_from_quat(quat_inverse(quat));
-    //m.cols[0].x /= scale.x;
-    //m.cols[1].y /= scale.y;
-    //m.cols[2].z /= scale.z;
-    //m.cols[3] = vec4_sub(vec4_new(0, 0, 0, 1), vec4_from_vec3(translation, 0.0f));
-    //return m;
 }
 
 inline mat4 mat4_translation(vec3 translation) {
