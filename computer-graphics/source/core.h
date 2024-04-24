@@ -16,6 +16,7 @@ typedef struct {
     unsigned int triangleCount;
 } Mesh;
 
+Mesh mesh_read(const char* filename);
 Mesh mesh_create(const struct vec3* vertices, const unsigned int* indices, int vertexCount, int triangleCount);
 void mesh_draw(Mesh mesh);
 void mesh_delete(Mesh mesh);

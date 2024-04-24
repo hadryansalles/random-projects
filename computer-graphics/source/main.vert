@@ -7,6 +7,6 @@ uniform mat4 model;
 out vec3 fragColor;
 
 void main() {
-    fragColor = inPos + vec3(0.5, 0.5, 0.5);
-    gl_Position = model * vec4(inPos.xyz, 1.0);
+    gl_Position = model * vec4(inPos, 1.0);
+    fragColor = (gl_Position.xyz + vec3(1.0)) / 2;
 }
