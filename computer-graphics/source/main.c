@@ -46,7 +46,7 @@ int main() {
     float camDist = 4;
     float camFov = 60;
     vec3 camPos = vec3_new(0, 0, camDist);
-    vec3 camRotation = vec3_zero();
+    vec4 camRotation = quat_identity();
 
     int viewMode = 0;
     int viewDeboucing = 0;
@@ -169,11 +169,11 @@ int main() {
             }
         } else if (manipulationMode == 1) {
             if (transformMode == 0) {
-                vec4 pos = mat4_apply(mat4_from_quat(quat_from_euler_zxy(camRotation)), vec4_from_vec3(vec3_mul(delta, 0.03), 1.0));
+                vec4 pos = mat4_apply(mat4_from_quat(camRotation), vec4_from_vec3(vec3_mul(delta, 0.03), 1.0));
                 camPos = vec3_add(camPos, vec3_from_vec4(pos));
             } else if (transformMode == 1) {
-                camRotation.x = fminf(fmaxf(camRotation.x, -89.9f), 89.9f);
-                camRotation = vec3_add(camRotation, vec3_mul(vec3_new(-delta.y, delta.x, -delta.z), 1.5));
+                vec4 camRotationDelta = quat_from_euler(vec3_mul(vec3_new(-delta.y, delta.x, -delta.z), 1.5));
+                camRotation = quat_mul(camRotationDelta, camRotation);
             }
         }
 
@@ -181,7 +181,7 @@ int main() {
         mat4 projection = mat4_perspective(camFov, aspect, 0.001f, 1000.0f);
         mat4 model = mat4_transform(scale, quat_from_euler(rotation), translation);
         mat4 camTranslation = mat4_translation(vec3_sub(vec3_zero(), camPos));
-        mat4 camRotationMat = mat4_from_quat(quat_inverse(quat_from_euler_zxy(camRotation)));
+        mat4 camRotationMat = mat4_from_quat(quat_inverse(camRotation));
         mat4 view = mat4_mul(camTranslation, camRotationMat);
         mat4 mvp = mat4_mul(model, mat4_mul(view, projection));
         glUniformMatrix4fv(modelLocation, 1, GL_FALSE, mvp.data);
