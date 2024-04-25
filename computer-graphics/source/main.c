@@ -38,23 +38,20 @@ int main() {
     unsigned int shaderProgram = shader_create("source/main.vert", "source/main.frag");
     int modelLocation = glGetUniformLocation(shaderProgram, "model");
 
-    Mesh mesh = mesh_read("cube.obj");
+    Mesh mesh = mesh_read("bunny.obj");
 
     vec3 translation = vec3_new(0, 0, 0);
     vec3 scale = vec3_new(1.0, 1.0, 1.0);
     vec3 rotation = vec3_zero();
     float camDist = 4;
-    float camFov = 45;
+    float camFov = 60;
     vec3 camPos = vec3_new(0, 0, camDist);
-    vec3 camRotation = vec3_new(0, 0, 0);
-    vec3 camTarget = vec3_zero();
-    vec3 camUp = vec3_new(0, 1, 0);
+    vec3 camRotation = vec3_zero();
 
     int viewMode = 0;
     int viewDeboucing = 0;
     int manipulationMode = 0;
     int transformMode = 0;
-    int cameraManipulationMode = 0;
 
     printf("Commands --------\n");
     printf("A - Backward\n");
@@ -71,8 +68,6 @@ int main() {
     printf("E - Scale\n");
     printf("P - Perspective projection\n");
     printf("G - Ortho(G)raphic projection\n");
-    printf("1 - FPS camera\n");
-    printf("2 - Orbit camera\n");
 
     glEnable(GL_DEPTH_TEST);
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
@@ -121,12 +116,6 @@ int main() {
         }
         if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS) {
             transformMode = 1;
-        }
-        if (glfwGetKey(window, GLFW_KEY_1) == GLFW_PRESS) {
-            cameraManipulationMode = 0;
-        }
-        if (glfwGetKey(window, GLFW_KEY_2) == GLFW_PRESS) {
-            cameraManipulationMode = 1;
         }
         if (glfwGetKey(window, GLFW_KEY_EQUAL) == GLFW_PRESS) {
             camFov += 0.1;
@@ -180,26 +169,20 @@ int main() {
             }
         } else if (manipulationMode == 1) {
             if (transformMode == 0) {
-                if (cameraManipulationMode == 0) {
-                    camPos = vec3_add(camPos, vec3_mul(delta, 0.03));
-                } else {
-                    camTarget = vec3_add(camTarget, vec3_mul(delta, 0.03));
-                }
+                vec4 pos = mat4_apply(mat4_from_quat(quat_from_euler_zxy(camRotation)), vec4_from_vec3(vec3_mul(delta, 0.03), 1.0));
+                camPos = vec3_add(camPos, vec3_from_vec4(pos));
             } else if (transformMode == 1) {
+                camRotation.x = fminf(fmaxf(camRotation.x, -89.9f), 89.9f);
                 camRotation = vec3_add(camRotation, vec3_mul(vec3_new(-delta.y, delta.x, -delta.z), 1.5));
             }
-            if (cameraManipulationMode == 0) {
-                camTarget = vec3_add(camPos, vec3_from_vec4(mat4_apply(mat4_from_quat(quat_from_euler(camRotation)), vec4_new(0, 0, -camDist, 0))));
-            } else {
-                camPos = vec3_add(camTarget, vec3_from_vec4(mat4_apply(mat4_from_quat(quat_inverse(quat_from_euler(camRotation))), vec4_new(0, 0, camDist, 0))));
-            }
-            camUp = vec3_from_vec4(mat4_apply(mat4_from_quat(quat_from_euler(camRotation)), vec4_new(0, 1, 0, 0)));
         }
 
         float aspect = screenWidth / (float)screenHeight;
         mat4 projection = mat4_perspective(camFov, aspect, 0.001f, 1000.0f);
         mat4 model = mat4_transform(scale, quat_from_euler(rotation), translation);
-        mat4 view = mat4_lookat(camPos, camTarget, camUp);
+        mat4 camTranslation = mat4_translation(vec3_sub(vec3_zero(), camPos));
+        mat4 camRotationMat = mat4_from_quat(quat_inverse(quat_from_euler_zxy(camRotation)));
+        mat4 view = mat4_mul(camTranslation, camRotationMat);
         mat4 mvp = mat4_mul(model, mat4_mul(view, projection));
         glUniformMatrix4fv(modelLocation, 1, GL_FALSE, mvp.data);
 

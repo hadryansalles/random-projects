@@ -201,6 +201,13 @@ inline vec4 quat_from_axis_angle(vec3 axis, float degrees) {
     return q;
 }
 
+inline vec4 quat_from_euler_zxy(vec3 degrees) {
+    vec4 qx = quat_from_axis_angle(vec3_new(1, 0, 0), degrees.x);
+    vec4 qy = quat_from_axis_angle(vec3_new(0, 1, 0), degrees.y);
+    vec4 qz = quat_from_axis_angle(vec3_new(0, 0, 1), degrees.z);
+    return quat_mul(qx, quat_mul(qy, qz));
+}
+
 inline vec4 quat_from_euler(vec3 degrees) {
     vec4 qx = quat_from_axis_angle(vec3_new(1, 0, 0), degrees.x);
     vec4 qy = quat_from_axis_angle(vec3_new(0, 1, 0), degrees.y);
