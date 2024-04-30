@@ -60,6 +60,18 @@ inline vec3 vec3_new(float x, float y, float z) {
     return v;
 }
 
+inline vec3 vec3_min(vec3 a, vec3 b) {
+    return vec3_new(fminf(a.x, b.x), fminf(a.y, b.y), fminf(a.z, b.z));
+}
+
+inline vec3 vec3_max(vec3 a, vec3 b) {
+    return vec3_new(fmaxf(a.x, b.x), fmaxf(a.y, b.y), fmaxf(a.z, b.z));
+}
+
+inline vec3 vec3_from_float(float a) {
+    return vec3_new(a, a, a);
+}
+
 inline vec4 vec4_new(float x, float y, float z, float w) {
     vec4 v = {
         .x = x,
@@ -106,12 +118,20 @@ inline float vec3_dot(vec3 a, vec3 b) {
     return a.x * b.x + a.y * b.y + a.z * b.z;
 }
 
+inline vec3 vec3_normalize(vec3 a) {
+    return vec3_mul(a, 1.0f/sqrtf(vec3_dot(a, a)));
+}
+
 inline float vec3_length(vec3 a) {
     return sqrt(vec3_dot(a, a));
 }
 
 inline vec4 vec4_sub(vec4 a, vec4 b) {
     return vec4_new(a.x - b.x, a.y - b.y, a.z - b.z, a.w - b.w);
+}
+
+inline vec4 vec4_mul(vec4 a, float b) {
+    return vec4_new(a.x * b, a.y * b, a.z * b, a.w * b);
 }
 
 inline mat4 mat4_identity() {
@@ -181,6 +201,13 @@ inline vec4 quat_from_axis_angle(vec3 axis, float degrees) {
     return q;
 }
 
+inline vec4 quat_from_euler_zxy(vec3 degrees) {
+    vec4 qx = quat_from_axis_angle(vec3_new(1, 0, 0), degrees.x);
+    vec4 qy = quat_from_axis_angle(vec3_new(0, 1, 0), degrees.y);
+    vec4 qz = quat_from_axis_angle(vec3_new(0, 0, 1), degrees.z);
+    return quat_mul(qx, quat_mul(qy, qz));
+}
+
 inline vec4 quat_from_euler(vec3 degrees) {
     vec4 qx = quat_from_axis_angle(vec3_new(1, 0, 0), degrees.x);
     vec4 qy = quat_from_axis_angle(vec3_new(0, 1, 0), degrees.y);
@@ -212,7 +239,11 @@ inline vec3 vec3_from_vec4(vec4 v) {
     return vec3_new(v.x, v.y, v.z);
 }
 
-inline vec4 vec4_print(vec4 v) {
+inline void vec3_print(vec3 v) {
+    printf("%.3f %.3f %.3f\n", v.x, v.y, v.z);
+}
+
+inline void vec4_print(vec4 v) {
     printf("%.3f %.3f %.3f %.3f\n", v.x, v.y, v.z, v.w);
 }
 
@@ -251,10 +282,11 @@ inline mat4 mat4_scale(vec3 scale) {
 }
 
 inline mat4 mat4_transform_inverse(vec3 scale, vec4 quat, vec3 translation) {
-    mat4 m = mat4_from_quat(quat_inverse(quat));
-    m.cols[0].x /= scale.x;
-    m.cols[1].y /= scale.y;
-    m.cols[2].z /= scale.z;
+    mat4 m = mat4_identity();
+    m.cols[0].x *= scale.x;
+    m.cols[1].y *= scale.y;
+    m.cols[2].z *= scale.z;
+    m = mat4_mul(mat4_from_quat(quat_inverse(quat)), m);
     m.cols[3] = vec4_sub(vec4_new(0, 0, 0, 1), vec4_from_vec3(translation, 0.0f));
     return m;
 }
@@ -263,6 +295,50 @@ inline mat4 mat4_translation(vec3 translation) {
    mat4 m = mat4_identity();
    m.cols[3] = vec4_from_vec3(translation, 1.0f); 
    return m;
+}
+
+inline mat4 mat4_oblique(float alpha, float beta) {
+    mat4 m = mat4_identity();
+    m.cols[2].x = 0.5f * cosf(radians(alpha));
+    m.cols[2].y = 0.5f * cosf(radians(beta));
+    m.cols[2].z = 0.0f;
+    return m;
+}
+
+inline mat4 mat4_ortho(float l, float r, float b, float t, float n, float f) {
+    mat4 m = mat4_identity();
+    m.cols[0].x = 2.0f / (r - l);
+    m.cols[1].y = 2.0f / (t - b);
+    m.cols[2].z = 2.0f / (n - f);
+    m.cols[3].x = -(r + l) / (r - l);
+    m.cols[3].y = -(t + b) / (t - b);
+    m.cols[3].z = -(n + f) / (n - f);
+    m.cols[3].w = 1.0f;
+    return m;
+}
+
+inline mat4 mat4_perspective(float fovy, float aspect, float near, float far) {
+    float tanHalfFovy = tan(radians(fovy)/2.0f);
+    mat4 m = mat4_identity();
+    m.cols[0].x = 1.0f / (aspect * tanHalfFovy);
+    m.cols[1].y = 1.0f / tanHalfFovy;
+    m.cols[2].z = -(far + near)/(far - near);
+    m.cols[2].w = -1.0f;
+    m.cols[3].z = -1.0*far*near/(far - near);
+    m.cols[3].w = 0.0f; 
+    return m;
+}
+
+inline mat4 mat4_lookat(vec3 eye, vec3 target, vec3 up) {
+    vec3 forward = vec3_normalize(vec3_sub(target, eye));
+    vec3 right = vec3_normalize(vec3_cross(forward, up));
+    up = vec3_normalize(vec3_cross(right, forward));
+    mat4 m = mat4_identity();
+    m.cols[0] = vec4_new(right.x, up.x, -forward.x, 0);
+    m.cols[1] = vec4_new(right.y, up.y, -forward.y, 0);
+    m.cols[2] = vec4_new(right.z, up.z, -forward.z, 0);
+    m.cols[3] = vec4_new(-vec3_dot(right, eye), -vec3_dot(up, eye), vec3_dot(forward, eye), 1);
+    return m;
 }
 
 #endif
