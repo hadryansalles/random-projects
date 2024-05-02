@@ -6,7 +6,6 @@
 #include <stdlib.h>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include <gl/gl.h>
 #include <math.h>
 
 #include "core.h"
@@ -18,8 +17,8 @@ int main() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-    uint32_t screenWidth = 1280;
-    uint32_t screenHeight = 720;
+    int32_t screenWidth = 1280;
+    int32_t screenHeight = 720;
     GLFWwindow* window = glfwCreateWindow(screenWidth, screenHeight, "CSV40 Hadryan Salles", NULL, NULL);
     if (window == NULL) {
         printf("Failed to initialize GLFW\n");
@@ -77,8 +76,8 @@ int main() {
             glfwSetWindowShouldClose(window, 1);
         }
 
-        uint32_t newWidth = screenWidth;
-        uint32_t newHeight = screenHeight;
+        int newWidth = screenWidth;
+        int newHeight = screenHeight;
         glfwGetWindowSize(window, &newWidth, &newHeight);
         if (newWidth != screenWidth || newHeight != screenHeight) {
             screenWidth = newWidth;
