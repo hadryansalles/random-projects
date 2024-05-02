@@ -5,6 +5,8 @@
 #ifndef CORE_H
 #define CORE_H
 
+#include "cglm.h"
+
 char* file_read(const char* filename, unsigned int* size);
 unsigned int shader_create(const char* vertexFile, const char* fragmentFile);
 
@@ -17,7 +19,7 @@ typedef struct {
 } Mesh;
 
 Mesh mesh_read(const char* filename);
-Mesh mesh_create(const struct vec3* vertices, const unsigned int* indices, int vertexCount, int triangleCount);
+Mesh mesh_create(const vec3* vertices, const unsigned int* indices, int vertexCount, int triangleCount);
 void mesh_draw(Mesh mesh);
 void mesh_delete(Mesh mesh);
 

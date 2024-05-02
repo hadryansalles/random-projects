@@ -9,7 +9,6 @@
 #include <stdlib.h>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include <gl/gl.h>
 #include <math.h>
 
 char* file_read(const char* filename, unsigned int* outsize) {
@@ -42,7 +41,7 @@ unsigned int shader_create(const char* vertexShaderFile, const char* fragmentSha
         return 0;
     }
     unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
-    glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
+    glShaderSource(vertexShader, 1, (const char* const*)&vertexShaderSource, NULL);
     glCompileShader(vertexShader);
     int success;
     char infoLog[512];
@@ -53,7 +52,7 @@ unsigned int shader_create(const char* vertexShaderFile, const char* fragmentSha
         return 0;
     }
     unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-    glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
+    glShaderSource(fragmentShader, 1, (const char* const*)&fragmentShaderSource, NULL);
     glCompileShader(fragmentShader);
     glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
     if (!success) {
@@ -102,9 +101,9 @@ Mesh mesh_read(const char* filename) {
 
     vec3* vertices = (vec3*)malloc(vertexCount * sizeof(vec3));
     vec3* normals = (vec3*)malloc(normalCount * sizeof(vec3));
-    unsigned int* indices = (vec3*)malloc(indexCount * sizeof(unsigned int) * 3);
-    unsigned int* normalIndices = (vec3*)malloc(indexCount * sizeof(unsigned int) * 3);
-    unsigned int* uvIndices = (vec3*)malloc(indexCount * sizeof(unsigned int) * 3);
+    unsigned int* indices = (unsigned int*)malloc(indexCount * sizeof(unsigned int) * 3);
+    unsigned int* normalIndices = (unsigned int*)malloc(indexCount * sizeof(unsigned int) * 3);
+    unsigned int* uvIndices = (unsigned int*)malloc(indexCount * sizeof(unsigned int) * 3);
 
     int vi = 0;
     int vni = 0;
