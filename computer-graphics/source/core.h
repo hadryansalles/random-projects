@@ -12,14 +12,15 @@ unsigned int shader_create(const char* vertexFile, const char* fragmentFile);
 
 typedef struct {
     unsigned int vao;
-    unsigned int vbo;
+    unsigned int vboVertices;
+    unsigned int vboNormals;
     unsigned int ibo;
     unsigned int vertexCount;
     unsigned int triangleCount;
 } Mesh;
 
 Mesh mesh_read(const char* filename);
-Mesh mesh_create(const vec3* vertices, const unsigned int* indices, int vertexCount, int triangleCount);
+Mesh mesh_create(const vec3* vertices, const vec3* normals, const unsigned int* indices, int vertexCount, int triangleCount);
 void mesh_draw(Mesh mesh);
 void mesh_delete(Mesh mesh);
 

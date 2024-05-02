@@ -100,6 +100,7 @@ Mesh mesh_read(const char* filename) {
     }
 
     vec3* vertices = (vec3*)malloc(vertexCount * sizeof(vec3));
+    vec3* genNormals = (vec3*)malloc(vertexCount * sizeof(vec3));
     vec3* normals = (vec3*)malloc(normalCount * sizeof(vec3));
     unsigned int* indices = (unsigned int*)malloc(indexCount * sizeof(unsigned int) * 3);
     unsigned int* normalIndices = (unsigned int*)malloc(indexCount * sizeof(unsigned int) * 3);
@@ -166,19 +167,41 @@ Mesh mesh_read(const char* filename) {
 
     for (int i = 0; i < vertexCount; i++) {
         vertices[i] = vec3_mul(vec3_sub(vertices[i], vmin), ratio);
-        vertices[i] = vec3_mul(vec3_sub(vertices[i], vec3_from_float(0.5)), 2.0);
+        vertices[i] = vec3_mul(vec3_sub(vertices[i], vec3_from_float(0.5)), 1.5);
     }
 
     for (int i = 0; i < fi; i++) {
         indices[i]--;
     }
 
+
+    for (int i = 0; i < vertexCount; i++) {
+        genNormals[i] = vec3_zero();
+    }
+
+    for (int i = 0; i < indexCount * 3; i += 3) {
+        vec3 v0 = vertices[indices[i + 0]];
+        vec3 v1 = vertices[indices[i + 1]];
+        vec3 v2 = vertices[indices[i + 2]];
+        vec3 e0 = vec3_sub(v1, v0);
+        vec3 e1 = vec3_sub(v2, v0);
+        vec3 n = vec3_normalize(vec3_cross(e1, e0));
+        genNormals[indices[i + 0]] = vec3_add(genNormals[indices[i + 0]], n);
+        genNormals[indices[i + 1]] = vec3_add(genNormals[indices[i + 1]], n);
+        genNormals[indices[i + 2]] = vec3_add(genNormals[indices[i + 2]], n);
+    }
+
+    for (int i = 0; i < vertexCount; i++) {
+        genNormals[i] = vec3_normalize(genNormals[i]);
+    }
+
     printf("Read mesh with %d vertices, %d normals and %d triangles\n", vi, vni, fi/3);
 
-    Mesh mesh = mesh_create(vertices, indices, vertexCount, indexCount);
+    Mesh mesh = mesh_create(vertices, genNormals, indices, vertexCount, indexCount);
 
     free(filebuffer);
     free(vertices);
+    free(genNormals);
     free(normals);
     free(indices);
     free(uvIndices);
@@ -187,21 +210,27 @@ Mesh mesh_read(const char* filename) {
     return mesh;
 }
 
-Mesh mesh_create(const vec3* vertices, const unsigned int* indices, int vertexCount, int triangleCount) {
+Mesh mesh_create(const vec3* vertices, const vec3* normals, const unsigned int* indices, int vertexCount, int triangleCount) {
     Mesh mesh;
     mesh.vertexCount = vertexCount;
     mesh.triangleCount = triangleCount;
 
     glGenVertexArrays(1, &mesh.vao);
-    glGenBuffers(1, &mesh.vbo);
+    glGenBuffers(1, &mesh.vboVertices);
+    glGenBuffers(1, &mesh.vboNormals);
     glGenBuffers(1, &mesh.ibo);
 
     glBindVertexArray(mesh.vao);
 
-    glBindBuffer(GL_ARRAY_BUFFER, mesh.vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, mesh.vboVertices);
     glBufferData(GL_ARRAY_BUFFER, 1 * vertexCount * sizeof(vec3), vertices, GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 1 * sizeof(vec3), (void*)0);
     glEnableVertexAttribArray(0);
+
+    glBindBuffer(GL_ARRAY_BUFFER, mesh.vboNormals);
+    glBufferData(GL_ARRAY_BUFFER, 1 * vertexCount * sizeof(vec3), normals, GL_STATIC_DRAW);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 1 * sizeof(vec3), (void*)0);
+    glEnableVertexAttribArray(1);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.ibo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, triangleCount * 3 * sizeof(unsigned int), indices, GL_STATIC_DRAW);
@@ -219,6 +248,7 @@ void mesh_draw(Mesh mesh) {
 
 void mesh_delete(Mesh mesh) {
     glDeleteVertexArrays(1, &mesh.vao);
-    glDeleteBuffers(1, &mesh.vbo);
+    glDeleteBuffers(1, &mesh.vboVertices);
+    glDeleteBuffers(1, &mesh.vboNormals);
     glDeleteBuffers(1, &mesh.ibo);
 }

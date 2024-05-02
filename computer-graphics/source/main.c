@@ -11,7 +11,35 @@
 #include "core.h"
 #include "cglm.h"
 
-int main() {
+void print_usage() {
+    printf("Usage: ./mesh cube.obj\n\n");
+    printf("Commands --------\n");
+    printf("Space - Reset transforms\n");
+    printf("A - Backward\n");
+    printf("D - Forward\n");
+    printf("Right\n");
+    printf("Left\n");
+    printf("Up\n");
+    printf("Down\n\n");
+    printf("Modes --------\n");
+    printf("O - Observer manipulation\n");
+    printf("M - Model manipulation\n");
+    printf("T - Translation\n");
+    printf("R - Rotation\n");
+    printf("E - Scale\n");
+    printf("P - Perspective projection\n");
+    printf("G - Ortho(G)raphic projection\n");
+    printf("'-' - Decrease FoV\n");
+    printf("'+' - Increase FoV\n");
+}
+
+int main(int argc, char* argv[]) {
+
+    if (argc < 2 || argv[1][0] == '-') {
+        print_usage();
+        return 1;
+    }
+
     glfwInit();
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 5);
@@ -37,37 +65,19 @@ int main() {
     unsigned int shaderProgram = shader_create("source/main.vert", "source/main.frag");
     int modelLocation = glGetUniformLocation(shaderProgram, "model");
 
-    Mesh mesh = mesh_read("bunny.obj");
+    Mesh mesh = mesh_read(argv[1]);
 
     vec3 translation = vec3_new(0, 0, 0);
     vec3 scale = vec3_new(1.0, 1.0, 1.0);
     vec3 rotation = vec3_zero();
-    float camDist = 4;
     float camFov = 60;
-    vec3 camPos = vec3_new(0, 0, camDist);
+    vec3 camPos = vec3_new(0, 0, 2);
     vec4 camRotation = quat_identity();
 
     int viewMode = 0;
     int viewDeboucing = 0;
     int manipulationMode = 0;
     int transformMode = 0;
-
-    printf("Commands --------\n");
-    printf("A - Backward\n");
-    printf("D - Forward\n");
-    printf("Right\n");
-    printf("Left\n");
-    printf("Up\n");
-    printf("Down\n\n");
-    printf("Modes --------\n");
-    printf("O - Observer manipulation\n");
-    printf("M - Model manipulation\n");
-    printf("T - Translation\n");
-    printf("R - Rotation\n");
-    printf("E - Scale\n");
-    printf("P - Perspective projection\n");
-    printf("G - Ortho(G)raphic projection\n");
-
     glEnable(GL_DEPTH_TEST);
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
@@ -122,12 +132,6 @@ int main() {
         if (glfwGetKey(window, GLFW_KEY_MINUS) == GLFW_PRESS) {
             camFov -= 0.1;
         }
-        if (glfwGetKey(window, GLFW_KEY_PERIOD) == GLFW_PRESS) {
-            camDist += 0.1;
-        }
-        if (glfwGetKey(window, GLFW_KEY_COMMA) == GLFW_PRESS) {
-            camDist -= 0.1;
-        }
         if (manipulationMode == 0 && glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
             transformMode = 2;
         }
@@ -152,8 +156,11 @@ int main() {
         }
         if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
             translation = vec3_zero();
-            scale = vec3_new(5, 5, 5);
+            scale = vec3_new(1, 1, 1);
             rotation = vec3_zero();
+            camFov = 60;
+            camPos = vec3_new(0, 0, 2);
+            camRotation = quat_identity();
         }
         if (manipulationMode == 0) {
             if (transformMode == 0) {
