@@ -79,6 +79,10 @@ if(UNIX)
 else()
     set_target_properties(${PROJECT_NAME} PROPERTIES VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/")
     set_property(DIRECTORY ${CMAKE_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${PROJECT_NAME})
+    target_compile_options(cg PRIVATE "/Zi")
+    target_compile_options(cg PRIVATE "/Ob0")
+    target_compile_options(cg PRIVATE "/Od")
+    target_compile_options(cg PRIVATE "/RTC1")
 endif()
 
 # log build types

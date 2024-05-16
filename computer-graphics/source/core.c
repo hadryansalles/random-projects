@@ -82,6 +82,8 @@ Mesh mesh_read(const char* filename) {
     unsigned int filesize = 0;
     char* filebuffer = file_read(filename, &filesize);
 
+    printf("Finished reading mesh file.\n");
+
     unsigned int vertexCount = 0;
     unsigned int normalCount = 0;
     unsigned int indexCount = 0;
@@ -98,6 +100,8 @@ Mesh mesh_read(const char* filename) {
             indexCount++;
         }
     }
+
+    printf("Finished counting vertiices.\n");
 
     vec3* vertices = (vec3*)malloc(vertexCount * sizeof(vec3));
     vec3* genNormals = (vec3*)malloc(vertexCount * sizeof(vec3));
@@ -118,13 +122,13 @@ Mesh mesh_read(const char* filename) {
     // read data
     for (int i = 0; i < filesize; i++) {
         if (filebuffer[i] == 'v' && filebuffer[i+1] == 'n') {
-            vec3* v = &(normals[vni]);
-            int count = sscanf(&filebuffer[i], "vn %f %f %f", &(v->x), &(v->y), &(v->z));
-            if (count == 3) {
-                vni++;
-                continue;
-            }
-            printf("Invalid normal...\n");
+            // vec3* v = &(normals[vni]);
+            // int count = sscanf(&filebuffer[i], "vn %f %f %f", &(v->x), &(v->y), &(v->z));
+            // if (count == 3) {
+            //     vni++;
+            //     continue;
+            // }
+            // printf("Invalid normal...\n");
         } else if (filebuffer[i] == 'v' && filebuffer[i+1] == 't') {
             // read uv
         } else if (filebuffer[i] == 'v' && (i == 0 || filebuffer[i - 1] == '\n') && (filebuffer[i + 1] == ' ')) {
@@ -162,6 +166,8 @@ Mesh mesh_read(const char* filename) {
         }
     }
 
+    printf("Finished parsing vertices.\n");
+
     vec3 diff = vec3_sub(vmax, vmin);
     float ratio = 1.0f / (fmax(diff.x, fmax(diff.y, diff.z)));
 
@@ -194,8 +200,6 @@ Mesh mesh_read(const char* filename) {
     for (int i = 0; i < vertexCount; i++) {
         genNormals[i] = vec3_normalize(genNormals[i]);
     }
-
-    printf("Read mesh with %d vertices, %d normals and %d triangles\n", vi, vni, fi/3);
 
     Mesh mesh = mesh_create(vertices, genNormals, indices, vertexCount, indexCount);
 
