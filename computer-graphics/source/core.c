@@ -214,6 +214,30 @@ Mesh mesh_read(const char* filename) {
     return mesh;
 }
 
+Mesh mesh_create_non_normals(const vec3* vertices, const unsigned int* indices, int vertexCount, int triangleCount) {
+    Mesh mesh;
+    mesh.vertexCount = vertexCount;
+    mesh.triangleCount = triangleCount;
+
+    glGenVertexArrays(1, &mesh.vao);
+    glGenBuffers(1, &mesh.vboVertices);
+    glGenBuffers(1, &mesh.ibo);
+
+    glBindVertexArray(mesh.vao);
+
+    glBindBuffer(GL_ARRAY_BUFFER, mesh.vboVertices);
+    glBufferData(GL_ARRAY_BUFFER, 1 * vertexCount * sizeof(vec3), vertices, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 1 * sizeof(vec3), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.ibo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, triangleCount * 3 * sizeof(unsigned int), indices, GL_STATIC_DRAW);
+
+    glBindVertexArray(0); 
+
+    return mesh;
+}
+
 Mesh mesh_create(const vec3* vertices, const vec3* normals, const unsigned int* indices, int vertexCount, int triangleCount) {
     Mesh mesh;
     mesh.vertexCount = vertexCount;
@@ -244,6 +268,12 @@ Mesh mesh_create(const vec3* vertices, const vec3* normals, const unsigned int* 
     return mesh;
 }
 
+void mesh_draw_lines(Mesh mesh) {
+    glBindVertexArray(mesh.vao);
+    glDrawArrays(GL_LINE_STRIP, 0, mesh.vertexCount);
+    glBindVertexArray(0);
+}
+
 void mesh_draw(Mesh mesh) {
     glBindVertexArray(mesh.vao);
     glDrawElements(GL_TRIANGLES, mesh.triangleCount*3, GL_UNSIGNED_INT, NULL);
@@ -255,4 +285,16 @@ void mesh_delete(Mesh mesh) {
     glDeleteBuffers(1, &mesh.vboVertices);
     glDeleteBuffers(1, &mesh.vboNormals);
     glDeleteBuffers(1, &mesh.ibo);
+}
+
+mat4 object_get_model(Object* object) {
+    return mat4_transform(object->size, quat_from_euler(object->rotation), object->position);
+}
+
+mat4 camera_get_view_projection(Camera* camera, float aspect) {
+    mat4 projection = mat4_perspective(camera->fov, aspect, 0.001f, 1000.0f);
+    mat4 camTranslation = mat4_translation(vec3_sub(vec3_zero(), camera->position));
+    mat4 camRotationMat = mat4_from_quat(quat_inverse(camera->rotation));
+    mat4 view = mat4_mul(camTranslation, camRotationMat);
+    return mat4_mul(view, projection);
 }
