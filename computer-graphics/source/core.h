@@ -20,6 +20,7 @@ typedef struct {
 } Mesh;
 
 Mesh mesh_read(const char* filename);
+Mesh mesh_read_parser(const char* filename);
 Mesh mesh_create_non_normals(const vec3* vertices, const unsigned int* indices, int vertexCount, int triangleCount);
 Mesh mesh_create(const vec3* vertices, const vec3* normals, const unsigned int* indices, int vertexCount, int triangleCount);
 void mesh_draw(Mesh mesh);

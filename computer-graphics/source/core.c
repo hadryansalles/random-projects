@@ -11,6 +11,9 @@
 #include <GLFW/glfw3.h>
 #include <math.h>
 
+#define TINYOBJ_LOADER_C_IMPLEMENTATION
+#include <tinyobj_loader_c.h>
+
 char* file_read(const char* filename, unsigned int* outsize) {
     FILE *f = fopen(filename, "rb");
     if (f == NULL) {
@@ -78,6 +81,53 @@ unsigned int shader_create(const char* vertexShaderFile, const char* fragmentSha
     return shaderProgram;
 }
 
+typedef struct {
+    char* buffers[1024];
+    int nextBuffer;
+} LoaderCtx;
+
+void get_file_data(void* ctx, const char* filename, const int is_mtl, const char* obj_filename, char** data, size_t* len) {
+    LoaderCtx* loaderCtx = ctx;
+    loaderCtx->buffers[loaderCtx->nextBuffer] = file_read(filename, len);
+    printf("READ FILE WITH LEN %d\n", *len);
+    *data = loaderCtx->buffers[loaderCtx->nextBuffer++];
+
+    //char* file_read(const char* filename, unsigned int* outsize) {
+
+    // (void)ctx;
+
+    // if (!filename) {
+    //     fprintf(stderr, "null filename\n");
+    //     (*data) = NULL;
+    //     (*len) = 0;
+    //     return;
+    // }
+
+    // size_t data_len = 0;
+
+    // *data = mmap_file(&data_len, filename);
+    // (*len) = data_len;
+}
+
+Mesh mesh_read_parser(const char* filename) {
+    // ...
+    tinyobj_attrib_t attrib;
+    tinyobj_shape_t* shapes;
+    tinyobj_material_t* materials;
+    size_t numShapes = 0;
+    size_t numMaterials = 0;
+    LoaderCtx ctx;
+    ctx.nextBuffer = 0;
+    unsigned int flags = TINYOBJ_FLAG_TRIANGULATE;
+    int ret =  tinyobj_parse_obj(&attrib, &shapes, &numShapes, &materials, &numMaterials, filename, get_file_data, &ctx, flags);
+    for (int i = 0; i < ctx.nextBuffer; i++) {
+        free(ctx.buffers[i]);
+    }
+    Mesh m;
+    m.ibo = 0;
+    return m;
+}
+
 Mesh mesh_read(const char* filename) {
     unsigned int filesize = 0;
     char* filebuffer = file_read(filename, &filesize);
@@ -122,13 +172,13 @@ Mesh mesh_read(const char* filename) {
     // read data
     for (int i = 0; i < filesize; i++) {
         if (filebuffer[i] == 'v' && filebuffer[i+1] == 'n') {
-            // vec3* v = &(normals[vni]);
-            // int count = sscanf(&filebuffer[i], "vn %f %f %f", &(v->x), &(v->y), &(v->z));
-            // if (count == 3) {
-            //     vni++;
-            //     continue;
-            // }
-            // printf("Invalid normal...\n");
+            vec3* v = &(normals[vni]);
+            int count = sscanf(&filebuffer[i], "vn %f %f %f", &(v->x), &(v->y), &(v->z));
+            if (count == 3) {
+                vni++;
+                continue;
+            }
+            printf("Invalid normal...\n");
         } else if (filebuffer[i] == 'v' && filebuffer[i+1] == 't') {
             // read uv
         } else if (filebuffer[i] == 'v' && (i == 0 || filebuffer[i - 1] == '\n') && (filebuffer[i + 1] == ' ')) {

@@ -78,6 +78,8 @@ int main(int argc, char* argv[]) {
         .rotation = quat_from_euler(vec3_new(0, 0, 0)),
     };
 
+    Mesh lucy = mesh_read_parser("lucy.obj");
+
     int viewMode = 0;
     int viewDeboucing = 0;
     int transformMode = 0;
