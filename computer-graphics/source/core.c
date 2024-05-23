@@ -11,6 +11,9 @@
 #include <GLFW/glfw3.h>
 #include <math.h>
 
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+
 #define TINYOBJ_LOADER_C_IMPLEMENTATION
 #include <tinyobj_loader_c.h>
 
@@ -89,28 +92,12 @@ typedef struct {
 void get_file_data(void* ctx, const char* filename, const int is_mtl, const char* obj_filename, char** data, size_t* len) {
     LoaderCtx* loaderCtx = ctx;
     loaderCtx->buffers[loaderCtx->nextBuffer] = file_read(filename, len);
-    printf("READ FILE WITH LEN %d\n", *len);
     *data = loaderCtx->buffers[loaderCtx->nextBuffer++];
-
-    //char* file_read(const char* filename, unsigned int* outsize) {
-
-    // (void)ctx;
-
-    // if (!filename) {
-    //     fprintf(stderr, "null filename\n");
-    //     (*data) = NULL;
-    //     (*len) = 0;
-    //     return;
-    // }
-
-    // size_t data_len = 0;
-
-    // *data = mmap_file(&data_len, filename);
-    // (*len) = data_len;
 }
 
 Mesh mesh_read_parser(const char* filename) {
-    // ...
+    Mesh mesh;
+    mesh.ibo = 0;
     tinyobj_attrib_t attrib;
     tinyobj_shape_t* shapes;
     tinyobj_material_t* materials;
@@ -120,12 +107,63 @@ Mesh mesh_read_parser(const char* filename) {
     ctx.nextBuffer = 0;
     unsigned int flags = TINYOBJ_FLAG_TRIANGULATE;
     int ret =  tinyobj_parse_obj(&attrib, &shapes, &numShapes, &materials, &numMaterials, filename, get_file_data, &ctx, flags);
+
+    if (ret == TINYOBJ_SUCCESS) {
+        printf("num_faces=%d num_vertices=%d num_uvs=%d\n", attrib.num_faces, attrib.num_vertices, attrib.num_texcoords);
+        vec3* vertices = malloc(3 * attrib.num_faces * sizeof(vec3));
+        vec3* normals = malloc(3 * attrib.num_faces * sizeof(vec3));
+        vec2* uvs = malloc(2 * attrib.num_faces * sizeof(vec2));
+        uint32_t* indices = malloc(3 * attrib.num_faces * sizeof(uint32_t));
+        int vertexCount = attrib.num_faces;
+        for (int i = 0; i < attrib.num_faces; i++) {
+            vertices[i].x = attrib.vertices[3 * attrib.faces[i].v_idx + 0];
+            vertices[i].y = attrib.vertices[3 * attrib.faces[i].v_idx + 1];
+            vertices[i].z = attrib.vertices[3 * attrib.faces[i].v_idx + 2];
+            if (attrib.faces[i].vt_idx < attrib.num_texcoords) {
+                uvs[i].x = attrib.texcoords[2 * attrib.faces[i].vt_idx + 0];
+                uvs[i].y = attrib.texcoords[2 * attrib.faces[i].vt_idx + 1];
+            }
+            if (attrib.faces[i].vn_idx < attrib.num_normals) {
+                normals[i].x = attrib.normals[3 * attrib.faces[i].vn_idx + 0];
+                normals[i].y = attrib.normals[3 * attrib.faces[i].vn_idx + 1];
+                normals[i].z = attrib.normals[3 * attrib.faces[i].vn_idx + 2];
+            }
+            indices[i] = i;
+        }
+        mesh_normalize(vertices, vertexCount);
+        mesh = mesh_create_normals_uvs(vertices, normals, uvs, indices, 3 * attrib.num_faces, attrib.num_faces / 3);
+        free(indices);
+        free(vertices);
+        free(normals);
+        free(uvs);
+    } else {
+        printf("Error %d in tinyobj_parse_obj\n", ret);
+    }
+
     for (int i = 0; i < ctx.nextBuffer; i++) {
         free(ctx.buffers[i]);
     }
-    Mesh m;
-    m.ibo = 0;
-    return m;
+    tinyobj_materials_free(materials, numMaterials);
+    tinyobj_shapes_free(shapes, numShapes);
+    tinyobj_attrib_free(&attrib);
+    return mesh;
+}
+
+void mesh_normalize(vec3* vertices, int vertexCount) {
+    vec3 vmin = vec3_from_float(1000000.0);
+    vec3 vmax = vec3_from_float(-1000000.0);
+    for (int i = 0; i < vertexCount; i++) {
+        vmin = vec3_min(vmin, vertices[i]);
+        vmax = vec3_max(vmax, vertices[i]);
+    }
+
+    vec3 diff = vec3_sub(vmax, vmin);
+    float ratio = 1.0f / (fmax(diff.x, fmax(diff.y, diff.z)));
+
+    for (int i = 0; i < vertexCount; i++) {
+        vertices[i] = vec3_mul(vec3_sub(vertices[i], vmin), ratio);
+        vertices[i] = vec3_mul(vec3_sub(vertices[i], vec3_from_float(0.5)), 1.5);
+    }
 }
 
 Mesh mesh_read(const char* filename) {
@@ -166,9 +204,6 @@ Mesh mesh_read(const char* filename) {
     int fni = 0;
     int fui = 0;
 
-    vec3 vmin = vec3_from_float(1000000.0);
-    vec3 vmax = vec3_from_float(-1000000.0);
-
     // read data
     for (int i = 0; i < filesize; i++) {
         if (filebuffer[i] == 'v' && filebuffer[i+1] == 'n') {
@@ -186,8 +221,6 @@ Mesh mesh_read(const char* filename) {
             int count = sscanf(&filebuffer[i], "v %f %f %f", &(v->x), &(v->y), &(v->z));
             if (count == 3) {
                 vi++;
-                vmin = vec3_min(vmin, *v);
-                vmax = vec3_max(vmax, *v);
                 continue;
             }
             printf("Invalid vertex...\n");
@@ -218,13 +251,7 @@ Mesh mesh_read(const char* filename) {
 
     printf("Finished parsing vertices.\n");
 
-    vec3 diff = vec3_sub(vmax, vmin);
-    float ratio = 1.0f / (fmax(diff.x, fmax(diff.y, diff.z)));
-
-    for (int i = 0; i < vertexCount; i++) {
-        vertices[i] = vec3_mul(vec3_sub(vertices[i], vmin), ratio);
-        vertices[i] = vec3_mul(vec3_sub(vertices[i], vec3_from_float(0.5)), 1.5);
-    }
+    mesh_normalize(vertices, vertexCount);
 
     for (int i = 0; i < fi; i++) {
         indices[i]--;
@@ -279,6 +306,41 @@ Mesh mesh_create_non_normals(const vec3* vertices, const unsigned int* indices, 
     glBufferData(GL_ARRAY_BUFFER, 1 * vertexCount * sizeof(vec3), vertices, GL_STATIC_DRAW);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 1 * sizeof(vec3), (void*)0);
     glEnableVertexAttribArray(0);
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.ibo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, triangleCount * 3 * sizeof(unsigned int), indices, GL_STATIC_DRAW);
+
+    glBindVertexArray(0); 
+
+    return mesh;
+}
+
+Mesh mesh_create_normals_uvs(const vec3* vertices, const vec3* normals, const vec2* uvs, const unsigned int* indices, int vertexCount, int triangleCount) {
+    Mesh mesh;
+    mesh.vertexCount = vertexCount;
+    mesh.triangleCount = triangleCount;
+
+    glGenVertexArrays(1, &mesh.vao);
+    glGenBuffers(1, &mesh.vboVertices);
+    glGenBuffers(1, &mesh.vboNormals);
+    glGenBuffers(1, &mesh.ibo);
+
+    glBindVertexArray(mesh.vao);
+
+    glBindBuffer(GL_ARRAY_BUFFER, mesh.vboVertices);
+    glBufferData(GL_ARRAY_BUFFER, 1 * vertexCount * sizeof(vec3), vertices, GL_STATIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 1 * sizeof(vec3), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    glBindBuffer(GL_ARRAY_BUFFER, mesh.vboNormals);
+    glBufferData(GL_ARRAY_BUFFER, 1 * vertexCount * sizeof(vec3), normals, GL_STATIC_DRAW);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 1 * sizeof(vec3), (void*)0);
+    glEnableVertexAttribArray(1);
+
+    glBindBuffer(GL_ARRAY_BUFFER, mesh.vboUvs);
+    glBufferData(GL_ARRAY_BUFFER, 1 * vertexCount * sizeof(vec2), uvs, GL_STATIC_DRAW);
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 1 * sizeof(vec2), (void*)0);
+    glEnableVertexAttribArray(2);
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.ibo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, triangleCount * 3 * sizeof(unsigned int), indices, GL_STATIC_DRAW);
@@ -347,4 +409,28 @@ mat4 camera_get_view_projection(Camera* camera, float aspect) {
     mat4 camRotationMat = mat4_from_quat(quat_inverse(camera->rotation));
     mat4 view = mat4_mul(camTranslation, camRotationMat);
     return mat4_mul(view, projection);
+}
+
+unsigned int texture_load(const char* filename) {
+    uint32_t width = 0;
+    uint32_t height = 0;
+    uint32_t channels = 0;
+    stbi_set_flip_vertically_on_load(1);
+    uint8_t* data = stbi_load(filename, &width, &height, &channels, 4);
+    unsigned int texture = 0;
+    if (data != NULL) {
+        glGenTextures(1, &texture);
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+        printf("width=%d height=%d channels=%d\n", width, height, channels);
+    } else {
+        printf("Error loading texture '%s'\n", filename);
+    }
+    stbi_image_free(data);
+    return texture;
 }

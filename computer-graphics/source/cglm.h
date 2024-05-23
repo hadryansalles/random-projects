@@ -7,6 +7,10 @@
 
 #define K_PI 3.14159265359f
 
+typedef struct xy_type {
+    float x, y;
+} xy_type;
+
 typedef struct xyz_type {
     float x, y, z;
 } xyz_type;
@@ -17,6 +21,13 @@ typedef struct vec3 {
         float data[3];
     };
 } vec3;
+
+typedef struct vec2 {
+    union {
+        xy_type;
+        float data[2];
+    };
+} vec2;
 
 typedef struct {
     float x, y, z, w;
