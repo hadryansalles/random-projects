@@ -132,7 +132,19 @@ mat4 mat4_transpose(mat4 a) {
     return b;
 }
 
-vec4 mat4_apply(mat4 a, vec4 v) {
+vec3 mat4_apply(mat4 a, vec3 v3) {
+    float* m = a.data;
+    vec4 v = vec4_from_vec3(v3, 1.0);
+    vec4 r = {
+        .x = v.x * m[0] + v.y * m[4] + v.z * m[8] + v.w * m[12],
+        .y = v.x * m[1] + v.y * m[5] + v.z * m[9] + v.w * m[13],
+        .z = v.x * m[2] + v.y * m[6] + v.z * m[10] + v.w * m[14],
+        .w = v.x * m[3] + v.y * m[7] + v.z * m[11] + v.w * m[15],
+    };
+    return vec3_from_vec4(r);
+}
+
+vec4 mat4_apply_vec4(mat4 a, vec4 v) {
     float* m = a.data;
     vec4 r = {
         .x = v.x * m[0] + v.y * m[4] + v.z * m[8] + v.w * m[12],

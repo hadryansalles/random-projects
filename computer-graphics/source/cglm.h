@@ -7,6 +7,10 @@
 
 #define K_PI 3.14159265359f
 
+typedef struct xy_type {
+    float x, y;
+} xy_type;
+
 typedef struct xyz_type {
     float x, y, z;
 } xyz_type;
@@ -17,6 +21,13 @@ typedef struct vec3 {
         float data[3];
     };
 } vec3;
+
+typedef struct vec2 {
+    union {
+        xy_type;
+        float data[2];
+    };
+} vec2;
 
 typedef struct {
     float x, y, z, w;
@@ -64,7 +75,8 @@ vec4 vec4_mul(vec4 a, float b);
 mat4 mat4_identity();
 mat4 mat4_mul(mat4 a, mat4 b);
 mat4 mat4_transpose(mat4 a);
-vec4 mat4_apply(mat4 a, vec4 v);
+vec3 mat4_apply(mat4 a, vec3 v);
+vec4 mat4_apply_vec4(mat4 a, vec4 v);
 vec4 quat_mul(vec4 a, vec4 b);
 vec4 quat_from_axis_angle(vec3 axis, float degrees);
 vec4 quat_from_euler_zxy(vec3 degrees);
