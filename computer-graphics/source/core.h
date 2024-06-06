@@ -26,8 +26,13 @@ Mesh mesh_read_parser(const char* filename);
 Mesh mesh_create_non_normals(const vec3* vertices, const unsigned int* indices, int vertexCount, int triangleCount);
 Mesh mesh_create(const vec3* vertices, const vec3* normals, const unsigned int* indices, int vertexCount, int triangleCount);
 Mesh mesh_create_normals_uvs(const vec3* vertices, const vec3* normals, const vec2* uvs, const unsigned int* indices, int vertexCount, int triangleCount);
+Mesh mesh_create_vertices(const vec3* vertices, int vertexCount);
 void mesh_draw(Mesh mesh);
+void mesh_draw_lines(Mesh mesh);
+void mesh_draw_polygon(Mesh mesh);
+void mesh_draw_points(Mesh mesh, int first, int last);
 void mesh_delete(Mesh mesh);
+void mesh_update_vertices(Mesh* mesh, const vec3* vertices, int vertexCount);
 
 int texture_load(const char* filename);
 
@@ -47,5 +52,7 @@ typedef struct {
 
 mat4 object_get_model(Object* object);
 mat4 camera_get_view_projection(Camera* camera, float aspect);
+
+int app_clipping(int argc, const char* argv[]);
 
 #endif

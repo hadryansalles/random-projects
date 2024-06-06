@@ -380,9 +380,52 @@ Mesh mesh_create(const vec3* vertices, const vec3* normals, const unsigned int* 
     return mesh;
 }
 
+Mesh mesh_create_vertices(const vec3* vertices, int vertexCount) {
+    Mesh mesh;
+    mesh.vertexCount = vertexCount;
+    mesh.triangleCount = 0;
+
+    glGenVertexArrays(1, &mesh.vao);
+    glGenBuffers(1, &mesh.vboVertices);
+
+    glBindVertexArray(mesh.vao);
+
+    glBindBuffer(GL_ARRAY_BUFFER, mesh.vboVertices);
+    glBufferData(GL_ARRAY_BUFFER, 1 * vertexCount * sizeof(vec3), vertices, GL_DYNAMIC_DRAW);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 1 * sizeof(vec3), (void*)0);
+    glEnableVertexAttribArray(0);
+
+    glBindVertexArray(0); 
+
+    return mesh;
+}
+
+void mesh_update_vertices(Mesh* mesh, const vec3* vertices, int vertexCount) {
+    mesh->vertexCount = vertexCount;
+
+    glBindVertexArray(mesh->vao);
+
+    glBindBuffer(GL_ARRAY_BUFFER, mesh->vboVertices);
+    glBufferData(GL_ARRAY_BUFFER, 1 * vertexCount * sizeof(vec3), vertices, GL_DYNAMIC_DRAW);
+
+    glBindVertexArray(0); 
+}
+
 void mesh_draw_lines(Mesh mesh) {
     glBindVertexArray(mesh.vao);
     glDrawArrays(GL_LINE_STRIP, 0, mesh.vertexCount);
+    glBindVertexArray(0);
+}
+
+void mesh_draw_polygon(Mesh mesh) {
+    glBindVertexArray(mesh.vao);
+    glDrawArrays(GL_TRIANGLE_FAN, 0, mesh.vertexCount);
+    glBindVertexArray(0);
+}
+
+void mesh_draw_points(Mesh mesh, int first, int last) {
+    glBindVertexArray(mesh.vao);
+    glDrawArrays(GL_POINTS, first, last);
     glBindVertexArray(0);
 }
 
