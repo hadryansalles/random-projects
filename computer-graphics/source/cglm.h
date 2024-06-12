@@ -55,6 +55,9 @@ typedef struct {
 } mat4;
 
 float radians(float degrees);
+vec2 vec2_sub(vec2 a, vec2 b);
+float vec2_length(vec2 a);
+vec2 vec2_new(float x, float y);
 vec3 vec3_new(float x, float y, float z);
 vec3 vec3_min(vec3 a, vec3 b);
 vec3 vec3_max(vec3 a, vec3 b);

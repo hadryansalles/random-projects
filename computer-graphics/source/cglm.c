@@ -13,6 +13,14 @@ float radians(float degrees) {
     return K_PI * degrees / 180.0f;
 }
 
+vec2 vec2_new(float x, float y) {
+    vec2 v = {
+        .x = x,
+        .y = y,
+    };
+    return v;
+}
+
 vec3 vec3_new(float x, float y, float z) {
     vec3 v = {
         .x = x,
@@ -60,6 +68,10 @@ vec3 vec3_add(vec3 a, vec3 b) {
     return vec3_new(a.x + b.x, a.y + b.y, a.z + b.z);
 }
 
+vec2 vec2_sub(vec2 a, vec2 b) {
+    return vec2_new(a.x - b.x, a.y - b.y);
+}
+
 vec3 vec3_sub(vec3 a, vec3 b) {
     return vec3_new(a.x - b.x, a.y - b.y, a.z - b.z);
 }
@@ -82,6 +94,10 @@ float vec3_dot(vec3 a, vec3 b) {
 
 vec3 vec3_normalize(vec3 a) {
     return vec3_mul(a, 1.0f/sqrtf(vec3_dot(a, a)));
+}
+
+float vec2_length(vec2 a) {
+    return sqrt(a.x * a.x + a.y * a.y);
 }
 
 float vec3_length(vec3 a) {
