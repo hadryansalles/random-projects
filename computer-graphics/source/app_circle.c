@@ -140,6 +140,9 @@ int app_circle(int argc, const char* argv[]) {
     int posLocation = glGetUniformLocation(shaderProgram, "position");
     int colorLocation = glGetUniformLocation(shaderProgram, "color");
 
+    int centerLocation = glGetUniformLocation(shaderProgram, "center");
+    int radiusLocation = glGetUniformLocation(shaderProgram, "radius");
+
     glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
     glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     glEnable(GL_BLEND);
@@ -183,8 +186,11 @@ int app_circle(int argc, const char* argv[]) {
             circleId++;
             printf("Current circle %d\n", circleId);
         }
+
+        glUniform3f(centerLocation, circles[lastCircle].center.x, circles[lastCircle].center.y, 0);
+        glUniform1f(radiusLocation, circles[lastCircle].radius);
         
-        if ((clock() - start > 30 * (CLOCKS_PER_SEC / 1000)) && circleId - lastCircle > 0) {
+        if ((clock() - start > 16 * (CLOCKS_PER_SEC / 1000)) && circleId - lastCircle > 0) {
             if (midpoint_circle_algorithm(circles[lastCircle], lastIter++, posLocation, quad, scale)) {
                 printf("Last circle %d\n", lastCircle);
                 lastCircle++;

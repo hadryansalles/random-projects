@@ -25,8 +25,8 @@ Mesh mesh_read(const char* filename);
 Mesh mesh_read_parser(const char* filename);
 Mesh mesh_create_non_normals(const vec3* vertices, const unsigned int* indices, int vertexCount, int triangleCount);
 Mesh mesh_create(const vec3* vertices, const vec3* normals, const unsigned int* indices, int vertexCount, int triangleCount);
-Mesh mesh_create_normals_uvs(const vec3* vertices, const vec3* normals, const vec2* uvs, const unsigned int* indices, int vertexCount, int triangleCount);
 Mesh mesh_create_vertices(const vec3* vertices, int vertexCount);
+void mesh_gen_normals(const vec3* vertices, vec3* normals, const unsigned int* indices, int vertexCount, int triangleCount);
 void mesh_draw(Mesh mesh);
 void mesh_draw_lines(Mesh mesh);
 void mesh_draw_polygon(Mesh mesh);
@@ -54,5 +54,7 @@ mat4 object_get_model(Object* object);
 mat4 camera_get_view_projection(Camera* camera, float aspect);
 
 int app_clipping(int argc, const char* argv[]);
+int app_circle(int argc, const char* argv[]);
+int app_t2(int argc, const char* argv[]);
 
 #endif

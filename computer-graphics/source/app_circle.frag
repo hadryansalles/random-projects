@@ -1,8 +1,10 @@
 #version 450 core
 
-
 uniform ivec3 position;
 uniform vec3 color;
+
+uniform ivec3 center;
+uniform float radius;
 
 in vec3 fragPos;
 out vec4 outColor;

@@ -115,6 +115,7 @@ Mesh mesh_read_parser(const char* filename) {
         vec2* uvs = malloc(2 * attrib.num_faces * sizeof(vec2));
         uint32_t* indices = malloc(3 * attrib.num_faces * sizeof(uint32_t));
         int vertexCount = attrib.num_faces;
+        int normCount = 0;
         for (int i = 0; i < attrib.num_faces; i++) {
             vertices[i].x = attrib.vertices[3 * attrib.faces[i].v_idx + 0];
             vertices[i].y = attrib.vertices[3 * attrib.faces[i].v_idx + 1];
@@ -127,11 +128,15 @@ Mesh mesh_read_parser(const char* filename) {
                 normals[i].x = attrib.normals[3 * attrib.faces[i].vn_idx + 0];
                 normals[i].y = attrib.normals[3 * attrib.faces[i].vn_idx + 1];
                 normals[i].z = attrib.normals[3 * attrib.faces[i].vn_idx + 2];
+                normCount++;
             }
             indices[i] = i;
         }
+        if (normCount != vertexCount) {
+            mesh_gen_normals(vertices, normals, indices, vertexCount, attrib.num_faces / 3);
+        }
         mesh_normalize(vertices, vertexCount);
-        mesh = mesh_create_normals_uvs(vertices, normals, uvs, indices, 3 * attrib.num_faces, attrib.num_faces / 3);
+        mesh = mesh_create(vertices, normals, indices, 3 * attrib.num_faces, attrib.num_faces / 3);
         free(indices);
         free(vertices);
         free(normals);
@@ -291,6 +296,28 @@ Mesh mesh_read(const char* filename) {
     return mesh;
 }
 
+void mesh_gen_normals(const vec3* vertices, vec3* normals, const unsigned int* indices, int vertexCount, int triangleCount) {
+    for (int i = 0; i < vertexCount; i++) {
+        normals[i] = vec3_zero();
+    }
+
+    for (int i = 0; i < triangleCount * 3; i += 3) {
+        vec3 v0 = vertices[indices[i + 0]];
+        vec3 v1 = vertices[indices[i + 1]];
+        vec3 v2 = vertices[indices[i + 2]];
+        vec3 e0 = vec3_sub(v1, v0);
+        vec3 e1 = vec3_sub(v2, v0);
+        vec3 n = vec3_normalize(vec3_cross(e0, e1));
+        normals[indices[i + 0]] = vec3_add(normals[indices[i + 0]], n);
+        normals[indices[i + 1]] = vec3_add(normals[indices[i + 1]], n);
+        normals[indices[i + 2]] = vec3_add(normals[indices[i + 2]], n);
+    }
+
+    for (int i = 0; i < vertexCount; i++) {
+        normals[i] = vec3_normalize(normals[i]);
+    }
+}
+
 Mesh mesh_create_non_normals(const vec3* vertices, const unsigned int* indices, int vertexCount, int triangleCount) {
     Mesh mesh;
     mesh.vertexCount = vertexCount;
@@ -315,8 +342,7 @@ Mesh mesh_create_non_normals(const vec3* vertices, const unsigned int* indices, 
     return mesh;
 }
 
-Mesh mesh_create_normals_uvs(const vec3* vertices, const vec3* normals, const vec2* uvs, const unsigned int* indices, int vertexCount, int triangleCount) {
-    Mesh mesh;
+Mesh mesh_create_normals_uvs(const vec3* vertices, const vec3* normals, const vec2* uvs, const unsigned int* indices, int vertexCount, int triangleCount) { Mesh mesh;
     mesh.vertexCount = vertexCount;
     mesh.triangleCount = triangleCount;
 
