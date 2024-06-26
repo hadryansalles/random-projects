@@ -29,6 +29,7 @@ vec3 sampleCubeMap(sampler2D sampler, vec3 n) {
         uv = vec2(-n.x, n.y);
     }
     uv *= 1.0/m;
+    uv = uv * 0.5 + 0.5;
     return texture(sampler, uv).rgb;
 }
 

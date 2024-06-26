@@ -110,37 +110,24 @@ Mesh mesh_read_parser(const char* filename) {
 
     if (ret == TINYOBJ_SUCCESS) {
         printf("num_faces=%d num_vertices=%d num_uvs=%d\n", attrib.num_faces, attrib.num_vertices, attrib.num_texcoords);
-        vec3* vertices = malloc(3 * attrib.num_faces * sizeof(vec3));
-        vec3* normals = malloc(3 * attrib.num_faces * sizeof(vec3));
-        vec2* uvs = malloc(2 * attrib.num_faces * sizeof(vec2));
+        vec3* vertices = malloc(attrib.num_vertices * sizeof(vec3));
+        vec3* normals = malloc(attrib.num_vertices * sizeof(vec3));
         uint32_t* indices = malloc(3 * attrib.num_faces * sizeof(uint32_t));
-        int vertexCount = attrib.num_faces;
-        int normCount = 0;
+        int vertexCount = attrib.num_vertices;
+        for (int i = 0; i < attrib.num_vertices; i++) {
+            vertices[i].x = attrib.vertices[3 * i + 0];
+            vertices[i].y = attrib.vertices[3 * i + 1];
+            vertices[i].z = attrib.vertices[3 * i + 2];
+        }
         for (int i = 0; i < attrib.num_faces; i++) {
-            vertices[i].x = attrib.vertices[3 * attrib.faces[i].v_idx + 0];
-            vertices[i].y = attrib.vertices[3 * attrib.faces[i].v_idx + 1];
-            vertices[i].z = attrib.vertices[3 * attrib.faces[i].v_idx + 2];
-            if (attrib.faces[i].vt_idx < attrib.num_texcoords) {
-                uvs[i].x = attrib.texcoords[2 * attrib.faces[i].vt_idx + 0];
-                uvs[i].y = attrib.texcoords[2 * attrib.faces[i].vt_idx + 1];
-            }
-            if (attrib.faces[i].vn_idx < attrib.num_normals) {
-                normals[i].x = attrib.normals[3 * attrib.faces[i].vn_idx + 0];
-                normals[i].y = attrib.normals[3 * attrib.faces[i].vn_idx + 1];
-                normals[i].z = attrib.normals[3 * attrib.faces[i].vn_idx + 2];
-                normCount++;
-            }
-            indices[i] = i;
+            indices[i] = attrib.faces[i].v_idx;
         }
-        if (normCount != vertexCount) {
-            mesh_gen_normals(vertices, normals, indices, vertexCount, attrib.num_faces / 3);
-        }
+        mesh_gen_normals(vertices, normals, indices, vertexCount, attrib.num_faces / 3);
         mesh_normalize(vertices, vertexCount);
-        mesh = mesh_create(vertices, normals, indices, 3 * attrib.num_faces, attrib.num_faces / 3);
+        mesh = mesh_create(vertices, normals, indices, vertexCount, attrib.num_faces / 3);
         free(indices);
         free(vertices);
         free(normals);
-        free(uvs);
     } else {
         printf("Error %d in tinyobj_parse_obj\n", ret);
     }

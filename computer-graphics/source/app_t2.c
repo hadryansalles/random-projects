@@ -47,7 +47,7 @@ int app_t2(int argc, char* argv[]) {
     int viewProjectionLocation = glGetUniformLocation(shaderProgram, "viewProjection");
 
     Object object = {
-        .mesh = mesh_read_parser("teapot.obj"),
+        .mesh = mesh_read_parser("dragon.obj"),
         .position = {0, 0, 0},
         .rotation = {0, 0, 0},
         .size = {2, 2, 2},
