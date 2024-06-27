@@ -1,7 +1,12 @@
 # author: Hadryan Sales
 
-# source=source/core.c
-source=source/main.c source/core.c source/cglm.c deps/glad/glad.c
+source=source/main.c \
+       source/core.c \
+	   source/cglm.c \
+	   deps/glad/glad.c \
+	   source/app_circle.c \
+	   source/app_clipping.c \
+	   source/app_t2.c \
 include=-Ideps -Ideps/glad
 
 all :

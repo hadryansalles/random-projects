@@ -41,7 +41,8 @@ typedef struct {
     vec3 position;
     vec3 size;
     vec3 rotation;
-    unsigned int texture;
+    unsigned int albedoTexture;
+    unsigned int bumpTexture;
 } Object;
 
 typedef struct {

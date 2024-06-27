@@ -3,11 +3,17 @@
 in vec3 fragPos;
 in vec3 fragNormal;
 
-uniform sampler2D texture1;
+uniform sampler2D albedoMap;
+uniform sampler2D bumpMap;
+
 uniform vec3 camPos;
-uniform vec3 lightPos;
-uniform float Kd;
-uniform float Ks;
+uniform vec3 material;
+uniform int mode;
+
+uniform vec3 lightPos0;
+uniform vec3 lightPos1;
+uniform vec3 lightColor0;
+uniform vec3 lightColor1;
 
 out vec4 outColor;
 
@@ -34,20 +40,54 @@ vec3 sampleCubeMap(sampler2D sampler, vec3 n) {
 }
 
 void main() {
-    vec3 lightColor = 20 * vec3(1, 1, 1);
+    vec3 albedo = sampleCubeMap(albedoMap, fragPos);
+    vec3 bump = sampleCubeMap(bumpMap, fragPos);
+    bump = normalize(bump * 2 - 1.0f);
 
-    vec3 N = normalize(fragNormal);
+    vec3 fragTangent = vec3(0, 1, 0);
+    if (fragNormal.y == 1 || fragNormal.y == -1) {
+        fragTangent = vec3(1, 0, 0);
+    }
+
+    vec3 fragNormal_ = normalize(fragNormal);
+    vec3 fragBitangent = cross(fragTangent, fragNormal_);
+    fragTangent = cross(fragNormal_, fragBitangent);
+
+    vec3 ambient = vec3(0.1);
+    vec3 diffuse = vec3(0, 0, 0);
+    vec3 specular = vec3(0, 0, 0);
+
     vec3 V = normalize(camPos - fragPos);
-    vec3 L = lightPos - fragPos;
-    vec3 L_ = normalize(L);
-    vec3 R_ = reflect(-L_, N);
+    vec3 N = normalize(mat3(fragBitangent, fragTangent, fragNormal_) * bump);
 
-    vec3 albedo = sampleCubeMap(texture1, N);
-    // vec3 albedo = vec3(0.3, 0.2, 0.8);
-    float ambient = 0.3;
-    float diffuse = Kd * max(dot(N, L_), 0);
-    float specular = Ks * pow(max(dot(V, R_), 0), 128);
+    {
+        vec3 L = lightPos0 - fragPos;
+        vec3 L_ = normalize(L);
+        vec3 R_ = reflect(-L_, N);
+        diffuse += lightColor0 * material.x * max(dot(N, L_), 0) / dot(L, L);
+        specular += lightColor0 * material.y * pow(max(dot(V, R_), 0), material.z) / dot(L, L);
+    }
+    {
+        vec3 L = lightPos1 - fragPos;
+        vec3 L_ = normalize(L);
+        vec3 R_ = reflect(-L_, N);
+        diffuse += lightColor1 * material.x * max(dot(N, L_), 0) / dot(L, L);
+        specular += lightColor1 * material.y * pow(max(dot(V, R_), 0), material.z) / dot(L, L);
+    }
 
-    // outColor = vec4(N, 1);
-    outColor = vec4(albedo * (ambient + (diffuse + specular) * lightColor / dot(L, L)), 1);
+    if (mode == 0) {
+        if (material.x == -1) {
+            if (length(lightPos0 - fragPos) < length(lightPos1 - fragPos)) {
+                outColor = vec4(lightColor0, 1);
+            } else {
+                outColor = vec4(lightColor1, 1);
+            }
+        } else {
+            outColor = vec4(albedo * (ambient + diffuse + specular), 1);
+        }
+    } else if (mode == 1) {
+        outColor = vec4(albedo, 1);
+    } else if (mode == 2) {
+        outColor = vec4(abs(N), 1);
+    }
 }

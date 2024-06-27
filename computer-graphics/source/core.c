@@ -151,10 +151,11 @@ void mesh_normalize(vec3* vertices, int vertexCount) {
 
     vec3 diff = vec3_sub(vmax, vmin);
     float ratio = 1.0f / (fmax(diff.x, fmax(diff.y, diff.z)));
+    vec3 offset = vec3_mul(diff, ratio / 2.0f);
 
     for (int i = 0; i < vertexCount; i++) {
         vertices[i] = vec3_mul(vec3_sub(vertices[i], vmin), ratio);
-        vertices[i] = vec3_mul(vec3_sub(vertices[i], vec3_from_float(0.5)), 1.5);
+        vertices[i] = vec3_mul(vec3_sub(vertices[i], offset), 2);
     }
 }
 
